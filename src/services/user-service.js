@@ -1,8 +1,8 @@
-const {UserRepository} = require('../repositories');
-const {StatusCodes} = require('http-status-codes');
-const AppError= require('../utils/errors/app-error')
+const { UserRepository } = require('../repositories');
+const { StatusCodes } = require('http-status-codes');
+const AppError = require('../utils/errors/app-error')
 const { Auth } = require('../utils/common');
-const userRepository= new UserRepository();
+const userRepository = new UserRepository();
 
 async function create(data) {
     try {
@@ -24,28 +24,48 @@ async function create(data) {
     }
 }
 
-async function signin(data){
+async function signin(data) {
     try {
         const user = await userRepository.getUserbyEmail(data.email);
-        if(!user){
+        if (!user) {
             throw new AppError("No user found for given email", StatusCodes.NOT_FOUND);
         }
-       const passwordMatch =  Auth.checkPassword(data.password, user.password);
+        const passwordMatch = Auth.checkPassword(data.password, user.password);
 
-       if(!passwordMatch){
-          throw new AppError("Invalid password", StatusCodes.BAD_REQUEST);
-       }
-       const token = Auth.createToken({id:user.id, email:user.email});
-       return token;
+        if (!passwordMatch) {
+            throw new AppError("Invalid password", StatusCodes.BAD_REQUEST);
+        }
+        const token = Auth.createToken({ id: user.id, email: user.email });
+        return token;
     } catch (error) {
-        if(error instanceof AppError) throw error;
+        if (error instanceof AppError) throw error;
         throw new AppError("Something went wrong ", StatusCodes.INTERNAL_SERVER_ERROR);
     }
 }
 
+async function isAuthenticated(token) {
+    try {
+        if (!token) {
+            throw new AppError("JWt Token missing", StatusCodes.BAD_REQUEST);
+        }
 
+        const response =  Auth.veryToken(token);
+        const user = await userRepository.get(response.id);
+        if (!user) {
+            throw new AppError("No user Found", StatusCodes.NOT_FOUND);
+        }
+        return user.id;
+    } catch (error) {
+        if (error instanceof AppError) throw error
+        if (error.name == "JsonWebTokenError") {
+            throw new AppError("Invalide JWT Token", StatusCodes.BAD_REQUEST);
+        }
+        throw new AppError('Some thing went wrong', StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+}
 
-module.exports= {
+module.exports = {
     create,
-    signin
+    signin,
+    isAuthenticated
 }
