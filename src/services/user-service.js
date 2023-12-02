@@ -71,8 +71,42 @@ async function isAuthenticated(token) {
     }
 }
 
+async function addRoleToUser(data){
+    try {
+        const user= await userRepository.get(data.id);
+        if (!user) {
+            throw new AppError("No user found for given ID", StatusCodes.NOT_FOUND);
+        }
+        const role = await roleRepository.getRolebyName(data.role);
+        if (!role) {
+            throw new AppError("No user found for given role", StatusCodes.NOT_FOUND);
+        }
+        user.addRole(role);
+        return user;
+
+    } catch (error) {
+        if (error instanceof AppError) throw error;
+        throw new AppError("Something went wrong ", StatusCodes.INTERNAL_SERVER_ERROR); 
+    }
+}
+
+async function isAdmin(id){
+      try {
+        const user= await userRepository.get(id);
+        if (!user) {
+            throw new AppError("No user found for given ID", StatusCodes.NOT_FOUND);
+        }
+        const adminRole = await roleRepository.getRolebyName(Enums.USER_ROLE_ENUM.ADMIN);
+        return user.hasRole(adminRole);
+      } catch (error) {
+        if (error instanceof AppError) throw error;
+        throw new AppError("Something went wrong ", StatusCodes.INTERNAL_SERVER_ERROR); 
+      }
+}
 module.exports = {
     create,
     signin,
-    isAuthenticated
+    isAuthenticated,
+    addRoleToUser,
+    isAdmin
 }
