@@ -3,7 +3,9 @@ const { ServerConfig, Logger } = require('./config');
 const apiRoutes = require('./routes/index')
 const { rateLimit } = require('express-rate-limit');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-
+const {User , Role} = require('./models');
+const role = require('./models/role');
+const user = require('./models/user');
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -18,7 +20,7 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-
+app.use('/api', apiRoutes)
 //reverse proxy
 //flights
 app.use('/flightsService', createProxyMiddleware({
@@ -37,11 +39,11 @@ app.use('/bookingService',
         }
     }));
 
-app.use('/api', apiRoutes)
 
-app.listen(ServerConfig.PORT, function exc() {
+
+app.listen(ServerConfig.PORT, async function exc() {
 
     console.log(`Server successfull running on http://localhost:${ServerConfig.PORT}`)
-
+    
     // Logger.info("successfully started the server", "root", {})
 })
