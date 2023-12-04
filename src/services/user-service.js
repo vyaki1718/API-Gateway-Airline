@@ -97,6 +97,9 @@ async function isAdmin(id){
             throw new AppError("No user found for given ID", StatusCodes.NOT_FOUND);
         }
         const adminRole = await roleRepository.getRolebyName(Enums.USER_ROLE_ENUM.ADMIN);
+        if (!adminRole) {
+            throw new AppError("No user found for given role", StatusCodes.NOT_FOUND);
+        }
         return user.hasRole(adminRole);
       } catch (error) {
         if (error instanceof AppError) throw error;
